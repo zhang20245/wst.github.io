@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>喵哥在线文生图</title>
+    <style>
+        /* 页面背景渐变及居中对齐 */
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #fbc2eb, #a6c1ee);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            overflow: hidden;
+            animation: gradientAnimation 10s ease infinite;
+        }
+
+        /* 页面主体容器 */
+        .container {
+            text-align: center;
+            padding: 30px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: scale(1.03);
+        }
+
+        /* 标题 */
+        h1 {
+            font-size: 36px;
+            color: #333;
+            margin-bottom: 20px;
+            animation: fadeIn 2s ease-out;
+        }
+
+        /* 输入框样式 */
+        input[type="text"] {
+            padding: 12px;
+            width: 80%;
+            font-size: 18px;
+            margin-bottom: 20px;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #2196F3;
+        }
+
+        /* 按钮样式 */
+        button {
+            padding: 12px 25px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* 加载动画 */
+        #loading {
+            font-size: 18px;
+            color: #555;
+            display: none;
+            margin-top: 20px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        /* 图片展示样式 */
+        #result {
+            margin-top: 20px;
+            display: none;
+            animation: fadeIn 1s ease-out;
+        }
+
+        img {
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 错误提示 */
+        .error-message {
+            color: red;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes gradientAnimation {
+            0% {
+                background: linear-gradient(135deg, #fbc2eb, #a6c1ee);
+            }
+            50% {
+                background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            }
+            100% {
+                background: linear-gradient(135deg, #fbc2eb, #a6c1ee);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>喵哥在线文生图</h1>
+        <p>请输入英文描述，建议结合GPT 生成英文的提示词使用，中文的效果不是很理想，但是最好是英文啦！生成图片：</p>
+        <input type="text" id="description" placeholder="例如：A girl walking on the beach">
+        <br><br>
+        <button onclick="generateImage()">生成图片</button>
+
+        <div id="loading">正在生成图片...</div>
+        <div id="result">
+            <img id="image" alt="生成的图片">
+        </div>
+        <div id="error" class="error-message"></div>
+    </div>
+
+    <script>
+        // 调用 Hugging Face API 生成图像
+        async function query(data) {
+            const response = await fetch(
+                "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-3.5-large", 
+                {
+                    headers: {
+                        "Authorization": "Bearer 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", // 记得更换为你自己的 API token
+                        "Content-Type": "application/json"
+                    },
+                    method: "POST",
+                    body: JSON.stringify(data)
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error('图像生成失败');
+            }
+            const result = await response.blob();
+            return result;
+        }
+
+        // 生成图像并显示
+        async function generateImage() {
+            const description = document.getElementById("description").value;
+            if (!description) {
+                alert("请输入一个描述！");
+                return;
+            }
+
+            document.getElementById("loading").style.display = "block";
+            document.getElementById("result").style.display = "none";
+            document.getElementById("error").textContent = '';
+
+            try {
+                const data = { "inputs": description };
+                const imageBlob = await query(data);
+                const imageUrl = URL.createObjectURL(imageBlob);
+
+                const imgElement = document.getElementById("image");
+                imgElement.src = imageUrl;
+
+                document.getElementById("loading").style.display = "none";
+                document.getElementById("result").style.display = "block";
+            } catch (error) {
+                console.error("Error generating image:", error);
+                document.getElementById("loading").style.display = "none";
+                document.getElementById("error").textContent = "生成图片失败，请稍后再试！";
+            }
+        }
+    </script>
+</body>
+</html>
